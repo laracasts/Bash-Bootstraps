@@ -1,0 +1,25 @@
+#!/bin/bash
+
+echo "Let's get started."
+
+echo -n "What is the name of the database for this app? "
+read -e DATABASE
+
+echo Creating MySQL database
+mysql -uroot -p -e "CREATE DATABASE $DATABASE"
+
+echo Updating database configuration file
+gsed -i "s/'database'  => 'database'/'database'  => '$DATABASE'/" app/config/database.php
+gsed -i "s/'password'  => ''/'password'  => '1234'/" app/config/database.php
+
+echo -n "Do you need a users table? [yes|no] "
+read -e ANSWER
+
+if [ $ANSWER = 'yes' ]
+then
+    echo Creating users table migration
+    php artisan generate:migration create_users_table --fields="username:string:unique, email:string:unique, password:string"
+
+    echo Migrating the database
+    php artisan migrate
+fi
